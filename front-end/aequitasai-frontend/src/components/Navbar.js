@@ -4,34 +4,16 @@ import { auth } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { signOut } from 'firebase/auth';
 import logo from '../assets/logo.png';
+import { useLocation } from 'react-router-dom';
 
 const Navbar = () => {
   const [user] = useAuthState(auth);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    navigate('/');
-  };
-
-  if (user) {
-    return (
-      <nav className="bg-white border-gray-200 p-4 flex justify-end">
-        <div className="relative">
-          <button className="focus:outline-none">
-            <img src={logo} className="h-8 w-8 rounded-full" alt="Profile" />
-          </button>
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
-            <button
-              onClick={handleLogout}
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </nav>
-    );
+  // Return null if on dashboard
+  if (location.pathname === '/dashboard') {
+    return null;
   }
 
   return (

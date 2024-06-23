@@ -4,7 +4,8 @@ import { ref, set, push } from 'firebase/database';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { FaMapMarkerAlt, FaEnvelope, FaPhone, FaFacebookF, FaLinkedinIn, FaInstagram } from 'react-icons/fa';
-
+import './Footer.js';
+import Footer from './Footer.js';
 
 const ContactPage = () => {
   const [form, setForm] = useState({
@@ -259,6 +260,7 @@ const ContactPage = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   );
 };

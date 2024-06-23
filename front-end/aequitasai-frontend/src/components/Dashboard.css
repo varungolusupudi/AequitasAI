@@ -1,0 +1,16 @@
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #f0f4f1;
+  }
+  
+  .dashboard-content {
+    display: flex;
+    flex-grow: 1;
+  }
+  
+  .main-content {
+    flex-grow: 1;
+    padding: 20px;
+  }
