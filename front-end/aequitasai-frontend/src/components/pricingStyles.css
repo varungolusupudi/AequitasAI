@@ -1,0 +1,56 @@
+/* src/styles/pricingPage.css */
+.container {
+    max-width: 1200px;
+    margin: auto;
+  }
+  
+  .pricing-box {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 30px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    text-align: left;
+  }
+  
+  .pricing-box:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .pricing-box.active-plan {
+    border: 2px solid #08aeea;
+  }
+  
+  .pricing-button-solid {
+    background-color: #588157;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background 0.3s, transform 0.3s;
+  }
+  
+  .pricing-button-solid:hover {
+    background-color: #3a5a40;
+    transform: translateY(-5px);
+  }
+  
+  .basic-features li {
+    list-style-type: disc;
+    margin-left: 20px;
+  }
+  
+  .pro-features li {
+    list-style-type: circle;
+    margin-left: 20px;
+  }
+  
+  ul {
+    padding-left: 20px;
+  }
+  
+  .pricing-box ul {
+    padding-left: 0;
+  }
+  

@@ -1,0 +1,56 @@
+/* Add this to your main CSS file or within a style tag */
+.bg-fern-green {
+    background-color: #588157; /* Fern green */
+  }
+  
+  .text-green-500 {
+    color: #588157;
+  }
+  
+  .bg-green-500 {
+    background-color: #588157;
+  }
+  
+  .bg-green-600 {
+    background-color: #3A5A40;
+  }
+  
+  .flex.items-stretch {
+    display: flex;
+    align-items: stretch;
+  }
+  
+  .flex.flex-col.justify-between {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  label {
+    font-weight: normal; /* Ensure labels are not bold */
+    color: #4a5568; /* Use a subtle text color */
+  }
+  
+  input,
+  textarea {
+    border: 1px solid #cbd5e0; /* Subtle border color */
+    font-family: 'Roboto', sans-serif; /* Modern and clean font */
+    font-size: 16px; /* Increase font size for better readability */
+  }
+  
+  button {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+  }
+  
+  /* Additional global styles */
+  body {
+    font-family: 'Roboto', sans-serif;
+    color: #2d3748; /* Base text color */
+    background-color: #edf2f7; /* Light background color */
+  }
+  
+  .text-left h2, .text-left p {
+    text-align: left;
+  }
+  
