@@ -10,7 +10,10 @@ import SignUpPage from './components/SignUpPage';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import Navbar from './components/Navbar';
+import LawyerSignIn from './components/LawyerSignIn';
+
 import Subscribe from './components/Subscribe';
+import LawyerSignUp from './components/LawyerSignUp';
 
 function App() {
   return (
@@ -25,6 +28,8 @@ function App() {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/lawyer-signin" element={<LawyerSignIn />} />
+        <Route path="/lawyer-signup" element={<LawyerSignUp/>} />
         <Route path="/subscribe/:priceId" element={<Subscribe />} />
       </Routes>
     </Router>

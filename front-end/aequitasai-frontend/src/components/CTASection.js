@@ -8,6 +8,10 @@ const CTASection = () => {
     navigate('/pricing');
   };
 
+  const handleLawyerSignIn = () => {
+    navigate('/lawyer-signin');
+  };
+
   return (
     <section className="bg-[#588157] py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -24,8 +28,8 @@ const CTASection = () => {
           >
             Get Started
           </button>
-          <button className="bg-transparent border-2 border-white text-white font-bold py-3 px-8 rounded-full hover:bg-[#4a6d4a] transition duration-300">
-            Watch Video
+          <button onClick={handleLawyerSignIn} className="bg-transparent border-2 border-white text-white font-bold py-3 px-8 rounded-full hover:bg-[#4a6d4a] transition duration-300">
+            Lawyer Sign In
           </button>
         </div>
       </div>

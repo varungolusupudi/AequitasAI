@@ -91,57 +91,53 @@ const ContactPage = () => {
     <div className="container mx-auto px-4">
       <h1 className="text-4xl font-bold text-center text-gray-800 mb-12">Contact Us</h1>
       <div className="flex flex-wrap -mx-4">
-        <div className="w-full lg:w-1/2 px-4 mb-8 lg:mb-0">
-          <div className="bg-green-500 rounded-lg shadow-lg p-8 text-white h-full flex flex-col">
-            <h2 className="text-4xl font-bold mb-8">Get in touch</h2>
-            <div className="space-y-8 flex-grow">
-              <div className="flex items-start">
-                <FaMapMarkerAlt className="text-2xl mr-4 mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="text-xl font-semibold mb-1">Visit us</h3>
-                  <p>
-                    Come say hello at our office HQ.<br />
-                    123 Market Street, San Francisco, CA 94103
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <FaEnvelope className="text-2xl mr-4 mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="text-xl font-semibold mb-1">Chat to us</h3>
-                  <p>
-                    Our friendly team is here to help.<br />
-                    <a href="mailto:contact@aequitasai.com" className="underline">contact@aequitasai.com</a>
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <FaPhone className="text-2xl mr-4 mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="text-xl font-semibold mb-1">Call us</h3>
-                  <p>
-                    Mon-Fri from 8am to 5pm<br />
-                    (+1) 123-456-7890
-                  </p>
-                </div>
-              </div>
+      <div className="w-full lg:w-1/2 px-4 mb-8 lg:mb-0">
+      <div className="bg-green-500 rounded-lg shadow-lg p-8 text-white h-full flex flex-col justify-between items-center text-center">
+        <div className="w-full">
+          <h2 className="text-4xl font-bold mb-8">Get in touch</h2>
+          <div className="space-y-8">
+            <div className="flex flex-col items-center">
+              <FaMapMarkerAlt className="text-3xl mb-2" />
+              <h3 className="text-xl font-semibold mb-2">Visit us</h3>
+              <p>
+                Come say hello at our office HQ.<br />
+                123 Market Street, San Francisco, CA 94103
+              </p>
             </div>
-            <div className="mt-8">
-              <h3 className="text-2xl font-semibold mb-4">Follow us</h3>
-              <div className="flex space-x-4">
-                <a href="#" className="text-white hover:text-green-200 transition-colors duration-300">
-                  <FaFacebookF className="text-2xl" />
-                </a>
-                <a href="#" className="text-white hover:text-green-200 transition-colors duration-300">
-                  <FaLinkedinIn className="text-2xl" />
-                </a>
-                <a href="#" className="text-white hover:text-green-200 transition-colors duration-300">
-                  <FaInstagram className="text-2xl" />
-                </a>
-              </div>
+            <div className="flex flex-col items-center">
+              <FaEnvelope className="text-3xl mb-2" />
+              <h3 className="text-xl font-semibold mb-2">Chat to us</h3>
+              <p>
+                Our friendly team is here to help.<br />
+                <a href="mailto:contact@aequitasai.com" className="underline">contact@aequitasai.com</a>
+              </p>
+            </div>
+            <div className="flex flex-col items-center">
+              <FaPhone className="text-3xl mb-2" />
+              <h3 className="text-xl font-semibold mb-2">Call us</h3>
+              <p>
+                Mon-Fri from 8am to 5pm<br />
+                (+1) 123-456-7890
+              </p>
             </div>
           </div>
         </div>
+        <div className="mt-8">
+          <h3 className="text-2xl font-semibold mb-4">Follow us</h3>
+          <div className="flex justify-center space-x-4">
+            <a href="#" className="text-white hover:text-green-200 transition-colors duration-300">
+              <FaFacebookF className="text-2xl" />
+            </a>
+            <a href="#" className="text-white hover:text-green-200 transition-colors duration-300">
+              <FaLinkedinIn className="text-2xl" />
+            </a>
+            <a href="#" className="text-white hover:text-green-200 transition-colors duration-300">
+              <FaInstagram className="text-2xl" />
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
           <div className="w-full lg:w-1/2 px-4">
             <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-8">
               <div className="mb-6 flex flex-wrap -mx-3">
