@@ -15,6 +15,9 @@ const Navbar = () => {
   if (location.pathname === '/dashboard') {
     return null;
   }
+  if (location.pathname === '/lawyer-dashboard') {
+    return null;
+  }
 
   return (
     <nav className="bg-white border-gray-200">

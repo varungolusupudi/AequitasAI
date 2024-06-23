@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { ref, set } from 'firebase/database';
 import { auth, db } from '../firebase';
 import { useNavigate, Link } from 'react-router-dom';
-import illustration from '../assets/LawyerIntegration.jpg'; 
+import illustration from '../assets/LawyerIntegration.jpg'; // Replace with an appropriate lawyer-themed illustration
 
 const LawyerSignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -37,8 +37,10 @@ const LawyerSignUp = () => {
 
       await updateProfile(user, { displayName: formData.fullName });
 
-      await setDoc(doc(db, 'lawyers', user.uid), {
+      // Create a new entry in the 'lawyers' node of the Realtime Database
+      await set(ref(db, `lawyers/${user.uid}`), {
         fullName: formData.fullName,
+        email: formData.email,
         barNumber: formData.barNumber,
         lawFirm: formData.lawFirm,
         specialization: formData.specialization,

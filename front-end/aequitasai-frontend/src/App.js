@@ -1,5 +1,5 @@
 // src/App.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import FeaturesPage from './components/FeaturesPage';
@@ -14,8 +14,14 @@ import LawyerSignIn from './components/LawyerSignIn';
 
 import Subscribe from './components/Subscribe';
 import LawyerSignUp from './components/LawyerSignUp';
+import LawyerDashboard from './components/LawyerDashboard';
+import { addDocumentToDatabase } from './utils/databaseSetup';
 
 function App() {
+  useEffect(() => {
+    addDocumentToDatabase();
+  }, []);
+
   return (
     <Router>
       <Navbar />
@@ -30,6 +36,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/lawyer-signin" element={<LawyerSignIn />} />
         <Route path="/lawyer-signup" element={<LawyerSignUp/>} />
+        <Route path="/lawyer-dashboard" element={<LawyerDashboard/>} />
         <Route path="/subscribe/:priceId" element={<Subscribe />} />
       </Routes>
     </Router>
