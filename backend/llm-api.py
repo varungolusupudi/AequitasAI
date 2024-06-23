@@ -169,34 +169,111 @@ def save_to_pdf(text, filename):
     c.save()
 
 def send_email_with_pdf(sender_email, sender_password, receiver_email, subject, body, pdf_path):
-    message = MIMEMultipart()
-    message["From"] = sender_email
-    message["To"] = receiver_email
-    message["Subject"] = subject
-
-    message.attach(MIMEText(body, "plain"))
-
-    with open(pdf_path, "rb") as attachment:
-        part = MIMEBase("application", "octet-stream")
-        part.set_payload(attachment.read())
-
-    encoders.encode_base64(part)
-
-    part.add_header(
-        "Content-Disposition",
-        f"attachment; filename= {pdf_path.split('/')[-1]}",
-    )
-
-    message.attach(part)
-
-    text = message.as_string()
-
-    with smtplib.SMTP("smtp-mail.outlook.com", 587) as server:
-        server.starttls()
-        server.login(sender_email, sender_password)
-        server.sendmail(sender_email, receiver_email, text)
+    # Configuration
+    api_url = "https://api.docuseal.co"
+    api_key = "5dkQoxBZ5MJ8SwzCVGgRVMvzAZvUmQaMni7AX337ySC"  # Replace with your actual API key
     
-    print(f"Email sent successfully to {receiver_email}")
+    try:
+        with open(pdf_path, "rb") as file:
+            encoded_file = base64.b64encode(file.read()).decode('utf-8')
+    except FileNotFoundError:
+        print(f"Error: File {pdf_path} not found.")
+         encoded_file = None
+
+
+    headers = {
+        "X-Auth-Token": api_key,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "name": template_name,
+        "documents": [
+            {
+                "file": encoded_file,
+                "fields": [
+                    {
+                        "name": "Signature",
+                        "type": "signature",
+                        "role": "First Party",
+                        "areas": [
+                            {
+                                "page": 1,
+                                "x": 0.5,
+                                "y": 0.5,
+                                "w": 0.2,
+                                "h": 0.1
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+    response = requests.post(f"{api_url}/templates/pdf", headers=headers, json=payload)
+    print(f"Create Template Response Status Code: {response.status_code}")
+    print(f"Create Template Response Content: {response.text}")
+
+    if response.status_code == 201 or response.status_code == 200:
+        template_id =  response.json().get("id")
+    else:
+        print(f"Error: Failed to create template. Status code: {response.status_code}, Response: {response.text}")
+        template_id = None
+
+
+    payload = {
+        "template_id": template_id,
+        "send_email": True,
+        "submitters": [
+            {
+                "role": "First Party",
+                "email": receiver_email
+            }
+        ]
+    }
+    response = requests.post(f"{api_url}/submissions", headers=headers, json=payload)
+    print(f"Create Submission Response Status Code: {response.status_code}")
+    print(f"Create Submission Response Content: {response.text}")
+
+    if response.status_code == 201 or response.status_code == 200:
+        submission_response = response.json()
+    else:
+        print(f"Error: Failed to create submission. Status code: {response.status_code}, Response: {response.text}")
+        submission_response = None
+
+    if not submission_response:
+        return
+
+    print(f"Submission created: {submission_response}")
+    
+    
+    # message = MIMEMultipart()
+    # message["From"] = sender_email
+    # message["To"] = receiver_email
+    # message["Subject"] = subject
+
+    # message.attach(MIMEText(body, "plain"))
+
+    # with open(pdf_path, "rb") as attachment:
+    #     part = MIMEBase("application", "octet-stream")
+    #     part.set_payload(attachment.read())
+
+    # encoders.encode_base64(part)
+
+    # part.add_header(
+    #     "Content-Disposition",
+    #     f"attachment; filename= {pdf_path.split('/')[-1]}",
+    # )
+
+    # message.attach(part)
+
+    # text = message.as_string()
+
+    # with smtplib.SMTP("smtp-mail.outlook.com", 587) as server:
+    #     server.starttls()
+    #     server.login(sender_email, sender_password)
+    #     server.sendmail(sender_email, receiver_email, text)
+    
+    # print(f"Email sent successfully to {receiver_email}")
 
 @app.post("/generate-document")
 async def generate_document(request: DocumentRequest):
