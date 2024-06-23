@@ -12,13 +12,34 @@ from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-class NDARe
-quest(BaseModel):
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class DocumentRequest(BaseModel):
     llm_prompt: str
-    sender_email: str
+    receiver_email: str
+    document_type: int
+
+class EnvironmentalRequest(BaseModel):
+    user_query: str
+    receiver_email: str
+
+DOCUMENT_TYPES = {
+    1: {"name": "NDA", "query": "Non-Disclosure Agreement requirements"},
+    2: {"name": "Articles of Incorporation", "query": "Articles of Incorporation requirements"},
+    3: {"name": "Employment Agreement", "query": "Employment Agreement requirements"},
+    4: {"name": "Operating Agreement for LLC", "query": "LLC Operating Agreement requirements"},
+    5: {"name": "Will", "query": "Last Will and Testament requirements"}
+}
 
 def get_descriptions_and_urls(api_key, query):
     headers = {"X-API-Key": api_key}
@@ -74,6 +95,41 @@ def invoke_bedrock_model(input_content, system_prompt):
         print(f"Stdout: {e.stdout}")
         print(f"Stderr: {e.stderr}")
         return None
+    
+def get_environmental_context(api_key, query):
+    headers = {"X-API-Key": api_key}
+    params = {"query": query}
+    response = requests.get(
+        f"https://api.ydc-index.io/search?query={query}",
+        params=params,
+        headers=headers,
+    )
+    results = response.json()
+    hits = results.get('hits', [])
+    return [{"description": hit.get('description', ''), "url": hit.get('url', '')} for hit in hits[:5]]  # Return top 5 results
+
+
+def generate_environmental_prompt(results, user_query):
+    prompt = f"User Query: {user_query}\n\nHere's some context from web searches about EPA regulations and climate law:\n\n"
+    for item in results:
+        prompt += f"Description: {item['description']}\nURL: {item['url']}\n\n"
+    prompt += "Please use this information to provide a comprehensive response to the user's query. Include relevant EPA regulations, climate laws, and guidelines. Also, provide a list of source URLs at the end of your response."
+    return prompt
+
+def extract_text_and_sources(response):
+    content = response["content"][0]["text"]
+    # Split the content into main text and sources
+    parts = content.split("Source URLs:", 1)
+    main_text = parts[0].strip()
+    sources = parts[1].strip().split("\n") if len(parts) > 1 else []
+    return main_text, sources
+
+def format_response_with_hyperlinks(main_text, sources):
+    formatted_text = main_text + "\n\nSources:\n"
+    for i, source in enumerate(sources, 1):
+        formatted_text += f"{i}. <a href='{source.strip()}'>{source.strip()}</a>\n"
+    return formatted_text
+
 
 def extract_text_from_response(response):
     content = response["content"][0]["text"]
@@ -86,21 +142,20 @@ def save_to_pdf(text, filename):
     c = canvas.Canvas(filename, pagesize=letter)
     width, height = letter
     margin = 40
-    text_width = width - 2 * margin  # Calculate the text width
+    text_width = width - 2 * margin
     text_object = c.beginText(margin, height - margin)
     text_object.setFont("Helvetica", 12)
     
     lines = text.split('\n')
-    line_height = 14  # Adjust based on font size
+    line_height = 14
     y_position = height - margin
 
-    # Adjust the wrapping width to better fit the text within the margins
     wrapping_width = int(text_width / 5.5)
 
     for line in lines:
-        wrapped_lines = textwrap.wrap(line, width=wrapping_width)  # Wrap the line
+        wrapped_lines = textwrap.wrap(line, width=wrapping_width)
         for wrapped_line in wrapped_lines:
-            if y_position <= margin:  # If we run out of space, create a new page
+            if y_position <= margin:
                 c.drawText(text_object)
                 c.showPage()
                 text_object = c.beginText(margin, height - margin)
@@ -114,37 +169,28 @@ def save_to_pdf(text, filename):
     c.save()
 
 def send_email_with_pdf(sender_email, sender_password, receiver_email, subject, body, pdf_path):
-    # Create a multipart message
     message = MIMEMultipart()
     message["From"] = sender_email
     message["To"] = receiver_email
     message["Subject"] = subject
 
-    # Add body to email
     message.attach(MIMEText(body, "plain"))
 
-    # Open PDF file in binary mode
     with open(pdf_path, "rb") as attachment:
-        # Add file as application/octet-stream
         part = MIMEBase("application", "octet-stream")
         part.set_payload(attachment.read())
 
-    # Encode file in ASCII characters to send by email    
     encoders.encode_base64(part)
 
-    # Add header as key/value pair to attachment part
     part.add_header(
         "Content-Disposition",
         f"attachment; filename= {pdf_path.split('/')[-1]}",
     )
 
-    # Add attachment to message
     message.attach(part)
 
-    # Convert message to string
     text = message.as_string()
 
-    # Log in to server using secure context and send email
     with smtplib.SMTP("smtp-mail.outlook.com", 587) as server:
         server.starttls()
         server.login(sender_email, sender_password)
@@ -152,10 +198,15 @@ def send_email_with_pdf(sender_email, sender_password, receiver_email, subject, 
     
     print(f"Email sent successfully to {receiver_email}")
 
-@app.post("/generate-nda")
-async def generate_nda(request: NDARequest):
+@app.post("/generate-document")
+async def generate_document(request: DocumentRequest):
     YOUR_API_KEY = '99d9afe1-45c9-4187-8701-dace7668e61a<__>1PTsFeETU8N2v5f4qmtDZVGS'
-    you_com_query = 'NDA requirements'
+    
+    if request.document_type not in DOCUMENT_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid document type")
+    
+    document_info = DOCUMENT_TYPES[request.document_type]
+    you_com_query = document_info["query"]
 
     # Get context from You.com
     results = get_descriptions_and_urls(YOUR_API_KEY, you_com_query)
@@ -170,32 +221,54 @@ async def generate_nda(request: NDARequest):
         response = invoke_bedrock_model(request.llm_prompt, system_prompt)
         
         # Extract text enclosed in triple quotes
-        nda_text = extract_text_from_response(response)
+        document_text = extract_text_from_response(response)
         
-        if nda_text:
+        if document_text:
             # Save to PDF
-            pdf_filename = "NDA.pdf"
-            save_to_pdf(nda_text, pdf_filename)
+            pdf_filename = f"{document_info['name']}.pdf"
+            save_to_pdf(document_text, pdf_filename)
 
             # Send email with PDF attachment
-            sender_email = request.sender_email
-            sender_password = "CalHacks2024"  # Note: In a production environment, use secure methods to store and retrieve passwords
-            receiver_email = "jejacob@berkeley.edu"  # You might want to make this configurable as well
-            subject = "NDA Document"
-            body = "Please find attached the NDA document generated based on your request."
+            sender_email = "aequitasai@outlook.com"  # This should be your configured sender email
+            sender_password = "CalHacks2024"  # This should be securely stored, not hardcoded
+            receiver_email = request.receiver_email
+            subject = f"{document_info['name']} Document"
+            body = f"Please find attached the {document_info['name']} document generated based on your request."
 
             try:
                 send_email_with_pdf(sender_email, sender_password, receiver_email, subject, body, pdf_filename)
-                return {"message": "NDA generated and sent successfully"}
+                return {"message": f"{document_info['name']} generated and sent successfully"}
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"An error occurred while sending the email: {str(e)}")
 
         else:
             if attempt == max_retries - 1:
-                raise HTTPException(status_code=500, detail="Failed to generate NDA after multiple attempts")
+                raise HTTPException(status_code=500, detail=f"Failed to generate {document_info['name']} after multiple attempts")
 
     # This line should never be reached due to the error handling above, but including it for completeness
     raise HTTPException(status_code=500, detail="Unexpected error occurred")
+
+@app.post("/environmental-guidance")
+async def environmental_guidance(request: EnvironmentalRequest):
+    YOUR_API_KEY = '99d9afe1-45c9-4187-8701-dace7668e61a<__>1PTsFeETU8N2v5f4qmtDZVGS'
+    you_com_query = f"EPA regulations and climate law related to {request.user_query}"
+
+    # Get context from You.com
+    results = get_environmental_context(YOUR_API_KEY, you_com_query)
+    
+    # Generate environmental prompt
+    environmental_prompt = generate_environmental_prompt(results, request.user_query)
+    
+    # Invoke Bedrock model
+    response = invoke_bedrock_model(environmental_prompt)
+    
+    if response:
+        main_text, sources = extract_text_and_sources(response)
+        formatted_response = format_response_with_hyperlinks(main_text, sources)
+        
+        return {"message": formatted_response}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to generate environmental guidance")
 
 if __name__ == "__main__":
     import uvicorn

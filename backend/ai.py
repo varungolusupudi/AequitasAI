@@ -72,21 +72,20 @@ def save_to_pdf(text, filename):
     c = canvas.Canvas(filename, pagesize=letter)
     width, height = letter
     margin = 40
-    text_width = width - 2 * margin  # Calculate the text width
+    text_width = width - 2 * margin
     text_object = c.beginText(margin, height - margin)
     text_object.setFont("Helvetica", 12)
     
     lines = text.split('\n')
-    line_height = 14  # Adjust based on font size
+    line_height = 14
     y_position = height - margin
 
-    # Adjust the wrapping width to better fit the text within the margins
-    wrapping_width = int(text_width / 5.5)
+    wrapping_width = int(text_width / 7)
 
     for line in lines:
-        wrapped_lines = textwrap.wrap(line, width=wrapping_width)  # Wrap the line
+        wrapped_lines = textwrap.wrap(line, width=wrapping_width)
         for wrapped_line in wrapped_lines:
-            if y_position <= margin:  # If we run out of space, create a new page
+            if y_position <= margin:
                 c.drawText(text_object)
                 c.showPage()
                 text_object = c.beginText(margin, height - margin)
@@ -107,8 +106,19 @@ def main():
     # Get context from You.com
     results = get_descriptions_and_urls(YOUR_API_KEY, you_com_query)
     
+    # Print You.com search results
+    print("You.com Search Results:")
+    for i, result in enumerate(results, 1):
+        print(f"\nResult {i}:")
+        print(f"Description: {result['description']}")
+        print(f"URL: {result['url']}")
+    
     # Generate system prompt
     system_prompt = generate_system_prompt(results)
+    
+    # Print the generated system prompt
+    print("\nGenerated System Prompt:")
+    print(system_prompt)
     
     # Retry logic
     max_retries = 3
@@ -121,7 +131,7 @@ def main():
         
         if nda_text:
             # Print the output to the terminal
-            print("Extracted text:")
+            print("\nExtracted NDA text:")
             print(nda_text)
 
             # Save to PDF
@@ -135,3 +145,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
