@@ -1,15 +1,18 @@
+// ChatInterface.js
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
 import { getAuth } from 'firebase/auth';
 import './ChatInterface.css';
 
-const ChatInterface = ({ activeSection }) => {
+const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [selectedDocumentType, setSelectedDocumentType] = useState(null);
+  const [activeSection, setActiveSection] = useState('caseLaws');
+  const [showNotification, setShowNotification] = useState(false);
   const messagesEndRef = useRef(null);
 
   const documentTypes = [
@@ -38,7 +41,6 @@ const ChatInterface = ({ activeSection }) => {
       type: 5,
       prompt: "Create a Last Will and Testament. Please provide:\n1. Full name and address of the testator (person making the will)\n2. Names and relationships of beneficiaries\n3. Specific bequests or gifts\n4. Residuary estate distribution\n5. Executor name and powers\n6. Guardian for minor children (if applicable)\n7. Any specific funeral or burial wishes"
     },
-    
   ];
 
   useEffect(() => {
@@ -58,45 +60,59 @@ const ChatInterface = ({ activeSection }) => {
     return () => unsubscribe();
   }, []);
 
-  const sendMessage = async () => {
-    if (input.trim() === '' || !selectedDocumentType) return;
+  const checkForDocumentKeywords = (text) => {
+    const keywords = ['document', 'agreement', 'contract', 'form', 'paperwork'];
+    return keywords.some(keyword => text.toLowerCase().includes(keyword));
+  };
 
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+    if (activeSection === 'environmental' && checkForDocumentKeywords(e.target.value)) {
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 5000); // Hide notification after 5 seconds
+    }
+  };
+
+  const sendMessage = async () => {
+    if (input.trim() === '') return;
+    if (activeSection === 'legalDocs' && !selectedDocumentType) return;
+  
     const newMessage = { role: 'user', content: input };
     setMessages(prevMessages => [...prevMessages, newMessage]);
     setInput('');
     setIsLoading(true);
-
+  
     try {
       let response;
-      if (selectedDocumentType === 'environmental') {
+      if (activeSection === 'environmental' || activeSection === 'caseLaws') {
         response = await axios.post('http://localhost:8000/environmental-guidance', {
-          user_query: input,
+          user_query: activeSection === 'caseLaws' ? `Case law related to: ${input}` : input,
           receiver_email: userEmail
         });
-      } else {
+      } else if (activeSection === 'legalDocs') {
         response = await axios.post('http://localhost:8000/generate-document', {
           llm_prompt: input,
           receiver_email: userEmail,
           document_type: selectedDocumentType
         });
       }
-
+  
       console.log('Response from FastAPI:', response.data);
-
+  
       const aiMessage = { 
         role: 'assistant', 
         content: response.data.message,
-        isHtml: selectedDocumentType === 'environmental'
+        isHtml: activeSection === 'environmental' || activeSection === 'caseLaws'
       };
       setMessages(prevMessages => [...prevMessages, aiMessage]);
     } catch (error) {
       console.error('Error details:', error);
-
+  
       let errorMessage = 'Error generating response: ';
       if (error.response) {
         console.error('Error response:', error.response.data);
         console.error('Error status:', error.response.status);
-        errorMessage += error.response.data.detail || error.response.statusText;
+        errorMessage += JSON.stringify(error.response.data) || error.response.statusText;
       } else if (error.request) {
         console.error('Error request:', error.request);
         errorMessage += 'No response received from server';
@@ -104,7 +120,7 @@ const ChatInterface = ({ activeSection }) => {
         console.error('Error message:', error.message);
         errorMessage += error.message;
       }
-
+  
       const errorResponseMessage = { role: 'assistant', content: errorMessage };
       setMessages(prevMessages => [...prevMessages, errorResponseMessage]);
     } finally {
@@ -124,46 +140,75 @@ const ChatInterface = ({ activeSection }) => {
     setSelectedDocumentType(doc.type);
   };
 
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+    setMessages([]);
+    setInput('');
+    setSelectedDocumentType(null);
+    setShowNotification(false);
+  };
+
   return (
     <div className="chat-interface">
-      <div className="chat-header">
-        <h2>{activeSection}</h2>
+      <div className="sidebar">
+        <button onClick={() => handleSectionChange('caseLaws')} className={activeSection === 'caseLaws' ? 'active' : ''}>Case Laws</button>
+        <button onClick={() => handleSectionChange('legalDocs')} className={activeSection === 'legalDocs' ? 'active' : ''}>AI Legal Document Creation</button>
+        <button onClick={() => handleSectionChange('environmental')} className={activeSection === 'environmental' ? 'active' : ''}>Environmental Documents</button>
       </div>
-      {activeSection === 'legalDocs' && (
-        <div className="document-list">
-          <h3>Select a document type:</h3>
-          {documentTypes.map((doc, index) => (
-            <button key={index} onClick={() => handleDocumentSelection(doc)}>
-              {doc.name}
-            </button>
+      <div className="main-content">
+        <div className="chat-header">
+          <h2>
+            {activeSection === 'caseLaws' ? 'Case Laws' :
+             activeSection === 'legalDocs' ? 'AI Legal Document Generation' :
+             'Environmental Documents'}
+          </h2>
+        </div>
+        {activeSection === 'legalDocs' && (
+          <div className="document-list">
+            <h3>Select a document type:</h3>
+            {documentTypes.map((doc, index) => (
+              <button key={index} onClick={() => handleDocumentSelection(doc)}>
+                {doc.name}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="messages">
+          {messages.map((msg, index) => (
+            <div key={index} className={`message ${msg.role}`}>
+              {msg.isHtml ? (
+                <div dangerouslySetInnerHTML={{ __html: msg.content }} />
+              ) : (
+                msg.content
+              )}
+            </div>
           ))}
+          {isLoading && <div className="message assistant">Generating response...</div>}
+          <div ref={messagesEndRef} />
+        </div>
+        <div className="input-area">
+          <textarea
+            value={input}
+            onChange={handleInputChange}
+            onKeyPress={handleKeyPress}
+            placeholder={
+              activeSection === 'environmental' ? "Ask about environmental regulations..." :
+              activeSection === 'caseLaws' ? "Ask about case laws..." :
+              activeSection === 'legalDocs' ? "Type your message... (Press Enter to send)" :
+              "Type your message..."
+            }
+            rows="3"
+          />
+          <button onClick={sendMessage} className="send-btn" disabled={isLoading}>
+            <PaperAirplaneIcon className="icon" />
+          </button>
+        </div>
+      </div>
+      {showNotification && (
+        <div className="notification">
+          Remember, we offer document creation services in the AI Legal Document Creation section!
         </div>
       )}
-      <div className="messages">
-        {messages.map((msg, index) => (
-          <div key={index} className={`message ${msg.role}`}>
-            {msg.isHtml ? (
-              <div dangerouslySetInnerHTML={{ __html: msg.content }} />
-            ) : (
-              msg.content
-            )}
-          </div>
-        ))}
-        {isLoading && <div className="message assistant">Generating response...</div>}
-        <div ref={messagesEndRef} />
-      </div>
-      <div className="input-area">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Type your message... (Press Enter to send)"
-          rows="3"
-        />
-        <button onClick={sendMessage} className="send-btn" disabled={isLoading}>
-          <PaperAirplaneIcon className="icon" />
-        </button>
-      </div>
     </div>
   );
 };

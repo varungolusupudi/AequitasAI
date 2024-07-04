@@ -1,9 +1,38 @@
+/* ChatInterface.css */
 .chat-interface {
   display: flex;
-  flex-direction: column;
   height: 100vh;
   font-family: Arial, sans-serif;
   color: #333;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #344e41;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar button {
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #588157;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.sidebar button:hover, .sidebar button.active {
+  background-color: #3a5a40;
+}
+
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-header {
@@ -110,4 +139,27 @@
 .icon {
   width: 20px;
   height: 20px;
+}
+
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #588157;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000;
+  animation: fadeIn 0.5s, fadeOut 0.5s 4.5s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }

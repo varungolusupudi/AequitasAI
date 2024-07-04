@@ -251,16 +251,28 @@ async def generate_document(request: DocumentRequest):
 @app.post("/environmental-guidance")
 async def environmental_guidance(request: EnvironmentalRequest):
     YOUR_API_KEY = '99d9afe1-45c9-4187-8701-dace7668e61a<__>1PTsFeETU8N2v5f4qmtDZVGS'
-    you_com_query = f"EPA regulations and climate law related to {request.user_query}"
+    
+    # Determine if it's an environmental or case law query
+    if "case law" in request.user_query.lower():
+        you_com_query = f"Legal case law related to {request.user_query}"
+        prompt_prefix = "Here's some context from web searches about relevant case law:\n\n"
+        response_instruction = "Please use this information to provide a comprehensive response to the user's query about case law. Include relevant legal precedents, key cases, and their implications. Also, provide a list of source URLs at the end of your response."
+    else:
+        you_com_query = f"EPA regulations and climate law related to {request.user_query}"
+        prompt_prefix = "Here's some context from web searches about EPA regulations and climate law:\n\n"
+        response_instruction = "Please use this information to provide a comprehensive response to the user's query. Include relevant EPA regulations, climate laws, and guidelines. Also, provide a list of source URLs at the end of your response."
 
     # Get context from You.com
     results = get_environmental_context(YOUR_API_KEY, you_com_query)
     
-    # Generate environmental prompt
-    environmental_prompt = generate_environmental_prompt(results, request.user_query)
-    
+    # Generate prompt
+    prompt = f"User Query: {request.user_query}\n\n{prompt_prefix}"
+    for item in results:
+        prompt += f"Description: {item['description']}\nURL: {item['url']}\n\n"
+    prompt += response_instruction
+
     # Invoke Bedrock model
-    response = invoke_bedrock_model(environmental_prompt)
+    response = invoke_bedrock_model(request.user_query, prompt)
     
     if response:
         main_text, sources = extract_text_and_sources(response)
@@ -268,7 +280,7 @@ async def environmental_guidance(request: EnvironmentalRequest):
         
         return {"message": formatted_response}
     else:
-        raise HTTPException(status_code=500, detail="Failed to generate environmental guidance")
+        raise HTTPException(status_code=500, detail="Failed to generate response")
 
 if __name__ == "__main__":
     import uvicorn
